@@ -25,7 +25,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onSave }) {
   function handleSave() {
     if (!apiKey.trim()) { alert('Entre ta clé API Riot Games'); return }
     if (!player.trim() || !player.includes('#')) {
-      alert('Format attendu : NomJoueur#TAG (ex: FAUGNAR#EUW)')
+      alert('Format attendu : NomJoueur#TAG (ex: ALDERIATE#EUW)')
       return
     }
     onSave({ apiKey: apiKey.trim(), player: player.trim(), interval })
@@ -68,7 +68,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onSave }) {
             className={styles.input}
             value={player}
             onChange={e => setPlayer(e.target.value)}
-            placeholder="FAUGNAR#EUW"
+            placeholder="ALDERIATE#EUW"
             autoComplete="off"
           />
         </div>
