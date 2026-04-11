@@ -1,0 +1,19 @@
+.track {
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  background: var(--cyan);
+  opacity: 0.5;
+  width: 0%;
+  animation: fill linear forwards;
+}
+
+@keyframes fill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
