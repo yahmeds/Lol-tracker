@@ -11,6 +11,27 @@ export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null
 
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+export async function saveConfig({ player, apiKey, interval }) {
+  if (!supabase) return
+  const { error } = await supabase
+    .from('config')
+    .upsert({ id: 1, player, api_key: apiKey, interval, updated_at: new Date().toISOString() })
+  if (error) console.error('Supabase saveConfig error:', error)
+}
+
+export async function loadConfig() {
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('config')
+    .select('player, api_key, interval')
+    .eq('id', 1)
+    .single()
+  if (error) return null
+  return data ? { player: data.player, apiKey: data.api_key, interval: data.interval } : null
+}
+
 // ─── Games ────────────────────────────────────────────────────────────────────
 
 export async function saveGame(game) {
@@ -24,22 +45,18 @@ export async function saveGame(game) {
   return data
 }
 
-export async function fetchGamesForPlayer(playerSlug, fromDate) {
+export async function fetchGamesLast30Days(playerSlug) {
   if (!supabase) return []
+  const from = new Date()
+  from.setDate(from.getDate() - 30)
   const { data, error } = await supabase
     .from('games')
     .select('*')
     .eq('player_slug', playerSlug)
-    .gte('started_at', fromDate.toISOString())
+    .gte('started_at', from.toISOString())
     .order('started_at', { ascending: true })
   if (error) console.error('Supabase fetchGames error:', error)
   return data || []
-}
-
-export async function fetchGamesLast30Days(playerSlug) {
-  const from = new Date()
-  from.setDate(from.getDate() - 30)
-  return fetchGamesForPlayer(playerSlug, from)
 }
 
 export async function updateGameDuration(gameId, durationMin) {
@@ -49,23 +66,4 @@ export async function updateGameDuration(gameId, durationMin) {
     .update({ duration_min: durationMin, ended_at: new Date().toISOString() })
     .eq('game_id', gameId)
   if (error) console.error('Supabase updateGameDuration error:', error)
-}
-
-export async function saveConfig({ player, apiKey, interval }) {
-  if (!supabase) return
-  const { error } = await supabase
-    .from('config')
-    .upsert({ id: 1, player, api_key: apiKey, interval, updated_at: new Date().toISOString() })
-  if (error) console.error('Supabase saveConfig error:', error)
-}
- 
-export async function loadConfig() {
-  if (!supabase) return null
-  const { data, error } = await supabase
-    .from('config')
-    .select('player, api_key, interval')
-    .eq('id', 1)
-    .single()
-  if (error) return null
-  return data ? { player: data.player, apiKey: data.api_key, interval: data.interval } : null
 }
