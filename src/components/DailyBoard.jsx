@@ -106,6 +106,63 @@ function Calendar({ allGames, selectedKey, onSelect }) {
   )
 }
 
+function DayDetail({ dateKey, games, isToday, countdown }) {
+  const date = new Date(dateKey)
+  const label = isToday
+    ? "Aujourd'hui"
+    : date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  const totalMin = games.reduce((a, g) => a + (g.duration_min || 0), 0)
+
+  return (
+    <div className={styles.dayDetail}>
+      <div className={styles.dayDetailHeader}>
+        <div className={styles.dayDetailLabel}>{label}</div>
+        {isToday && <div className={styles.reset}>Reset dans <span>{countdown}</span></div>}
+      </div>
+
+      <div className={styles.grid}>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Games jouées</div>
+          <div className={styles.statValue}>{games.length}</div>
+          <div className={styles.statUnit}>{isToday ? "aujourd'hui" : 'ce jour-là'}</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statLabel}>Temps de jeu</div>
+          <div className={`${styles.statValue} ${styles.time}`}>{formatHoursMin(totalMin)}</div>
+          <div className={styles.statUnit}>estimé</div>
+        </div>
+      </div>
+
+      <div className={styles.historyTitle}>PARTIES</div>
+      {games.length === 0 ? (
+        <div className={styles.empty}>Aucune partie ce jour-là</div>
+      ) : (
+        <div className={styles.list}>
+          {[...games].reverse().map(g => (
+            <div key={g.game_id} className={styles.item}>
+              <div className={styles.itemDot} />
+              <div className={styles.itemLeft}>
+                <span className={styles.itemTime}>
+                  {new Date(g.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                {g.queue_label && (
+                  <span className={styles.itemQueue}>{g.queue_label}</span>
+                )}
+              </div>
+              <div className={styles.itemDuration}>
+                {g.duration_min
+                  ? `${g.duration_min} min`
+                  : <span className={styles.live}>● live</span>
+                }
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function DailyBoard({ todayGames, totalMinToday }) {
   const countdown = useResetCountdown()
