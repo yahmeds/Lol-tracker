@@ -103,6 +103,7 @@ export default function App() {
           <DailyBoard
             todayGames={todayGames}
             totalMinToday={totalMinToday}
+            allGames={allGames}
           />
         ) : (
           <StatsChart allGames={allGames} />
