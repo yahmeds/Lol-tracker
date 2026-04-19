@@ -1,9 +1,14 @@
+import { useState, useMemo } from 'react'
 import styles from './DailyBoard.module.css'
 
 function formatHoursMin(totalMin) {
   const h = Math.floor(totalMin / 60)
   const m = totalMin % 60
   return `${h}h ${String(m).padStart(2, '0')}m`
+}
+
+function toDateKey(date) {
+  return date.toISOString().slice(0, 10) // "2025-04-11"
 }
 
 function useResetCountdown() {
@@ -16,6 +21,7 @@ function useResetCountdown() {
   return `${h}h ${String(m).padStart(2, '0')}m`
 }
 
+// ─── Calendar ────────────────────────────────────────────────────────────────
 
 function Calendar({ allGames, selectedKey, onSelect }) {
   const [monthOffset, setMonthOffset] = useState(0)
@@ -24,6 +30,7 @@ function Calendar({ allGames, selectedKey, onSelect }) {
   const displayMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1)
   const monthLabel = displayMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
+  // Build a set of dateKeys that have games
   const gamesByDay = useMemo(() => {
     const map = {}
     for (const g of allGames) {
@@ -34,9 +41,11 @@ function Calendar({ allGames, selectedKey, onSelect }) {
     return map
   }, [allGames])
 
+  // Days in this month
   const firstDay = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), 1)
   const lastDay  = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 0)
 
+  // Padding before first day (Monday = 0)
   let startPad = firstDay.getDay() - 1
   if (startPad < 0) startPad = 6
 
@@ -106,6 +115,8 @@ function Calendar({ allGames, selectedKey, onSelect }) {
   )
 }
 
+// ─── Day detail ───────────────────────────────────────────────────────────────
+
 function DayDetail({ dateKey, games, isToday, countdown }) {
   const date = new Date(dateKey)
   const label = isToday
@@ -164,54 +175,58 @@ function DayDetail({ dateKey, games, isToday, countdown }) {
   )
 }
 
-export default function DailyBoard({ todayGames, totalMinToday }) {
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function DailyBoard({ todayGames, totalMinToday, allGames }) {
+  const todayKey = toDateKey(new Date())
+  const [selectedKey, setSelectedKey] = useState(todayKey)
+  const [calOpen, setCalOpen] = useState(false)
   const countdown = useResetCountdown()
+
+  const gamesByDay = useMemo(() => {
+    const map = {}
+    for (const g of allGames) {
+      const key = toDateKey(new Date(g.started_at))
+      if (!map[key]) map[key] = []
+      map[key].push(g)
+    }
+    return map
+  }, [allGames])
+
+  const selectedGames = gamesByDay[selectedKey] || []
+  const isToday = selectedKey === todayKey
+
+  function handleSelectDay(key) {
+    setSelectedKey(key)
+    setCalOpen(false)
+  }
 
   return (
     <div className={styles.board}>
       <div className={styles.header}>
         <div className={styles.title}>DAILY BOARD</div>
-        <div className={styles.reset}>Reset dans <span>{countdown}</span></div>
+        <button
+          className={`${styles.calToggle} ${calOpen ? styles.calToggleActive : ""}`}
+          onClick={() => setCalOpen(o => !o)}
+        >
+          Calendrier
+        </button>
       </div>
 
-      <div className={styles.grid}>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Games jouées</div>
-          <div className={styles.statValue}>{todayGames.length}</div>
-          <div className={styles.statUnit}>aujourd'hui</div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statLabel}>Temps de jeu</div>
-          <div className={`${styles.statValue} ${styles.time}`}>
-            {formatHoursMin(totalMinToday)}
-          </div>
-          <div className={styles.statUnit}>estimé</div>
-        </div>
-      </div>
-
-      <div className={styles.historyTitle}>PARTIES DU JOUR</div>
-      {todayGames.length === 0 ? (
-        <div className={styles.empty}>Aucune partie détectée aujourd'hui</div>
-      ) : (
-        <div className={styles.list}>
-          {[...todayGames].reverse().map(g => (
-            <div key={g.game_id} className={styles.item}>
-              <div className={styles.itemDot} />
-              <div className={styles.itemLeft}>
-                <span className={styles.itemTime}>
-                  {new Date(g.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                {g.queue_label && (
-                  <span className={styles.itemQueue}>{g.queue_label}</span>
-                )}
-              </div>
-              <div className={styles.itemDuration}>
-                {g.duration_min ? `${g.duration_min} min` : <span className={styles.live}>● live</span>}
-              </div>
-            </div>
-          ))}
-        </div>
+      {calOpen && (
+        <Calendar
+          allGames={allGames}
+          selectedKey={selectedKey}
+          onSelect={handleSelectDay}
+        />
       )}
+
+      <DayDetail
+        dateKey={selectedKey}
+        games={selectedGames}
+        isToday={isToday}
+        countdown={countdown}
+      />
     </div>
   )
 }
