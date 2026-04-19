@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { saveConfig, loadConfig } from '../lib/supabase'
 
 const SETTINGS_KEY = 'coachscan_settings'
 
@@ -18,10 +19,21 @@ export function useSettings() {
     }
   })
 
-  function saveSettings(next) {
+  useEffect(() => {
+    loadConfig().then(remote => {
+      if (remote?.player && remote?.apiKey) {
+        const merged = { ...defaultSettings, ...remote }
+        setSettingsState(merged)
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
+      }
+    }).catch(() => {})
+  }, [])
+
+  async function saveSettings(next) {
     const merged = { ...settings, ...next }
     setSettingsState(merged)
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
+    await saveConfig(merged)
   }
 
   function clearSettings() {
