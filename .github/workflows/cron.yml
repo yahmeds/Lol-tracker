@@ -11,10 +11,7 @@ jobs:
     steps:
       - name: Call poll endpoint
         run: |
-          echo "Secret length: ${#CRON_SECRET}"
           curl -s -o response.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             ${{ secrets.VERCEL_APP_URL }}/api/poll
           cat response.txt
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
