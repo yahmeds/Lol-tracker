@@ -155,3 +155,135 @@
   color: var(--red);
   animation: pulse 1s infinite;
 }
+
+.calendar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.calNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.calMonth {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.calBtn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.calBtn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calDayLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 4px 0;
+  letter-spacing: 1px;
+}
+
+.calDay {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 2px;
+}
+
+.calDay:hover:not(:disabled) {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+
+.calDayFuture {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.calDayHasGames {
+  background: rgba(61, 214, 140, 0.06);
+}
+
+.calDayToday .calDayNum {
+  color: var(--cyan);
+  font-weight: 500;
+}
+
+.calDaySelected {
+  background: rgba(200, 168, 75, 0.12) !important;
+  border-color: var(--gold) !important;
+}
+
+.calDayNum {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.calDayDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+.calLegend {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.calLegend span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legendDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
