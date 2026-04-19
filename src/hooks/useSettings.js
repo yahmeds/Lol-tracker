@@ -45,3 +45,13 @@ export function useSettings() {
 
   return { settings, saveSettings, clearSettings, isConfigured }
 }
+
+//DEBUG
+async function saveSettings(next) {
+  const merged = { ...settings, ...next }
+  setSettingsState(merged)
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
+  console.log('Saving to Supabase:', merged)
+  const result = await saveConfig(merged)
+  console.log('Supabase result:', result)
+}
