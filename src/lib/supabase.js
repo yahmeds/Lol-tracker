@@ -50,3 +50,22 @@ export async function updateGameDuration(gameId, durationMin) {
     .eq('game_id', gameId)
   if (error) console.error('Supabase updateGameDuration error:', error)
 }
+
+export async function saveConfig({ player, apiKey, interval }) {
+  if (!supabase) return
+  const { error } = await supabase
+    .from('config')
+    .upsert({ id: 1, player, api_key: apiKey, interval, updated_at: new Date().toISOString() })
+  if (error) console.error('Supabase saveConfig error:', error)
+}
+ 
+export async function loadConfig() {
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('config')
+    .select('player, api_key, interval')
+    .eq('id', 1)
+    .single()
+  if (error) return null
+  return data ? { player: data.player, apiKey: data.api_key, interval: data.interval } : null
+}
