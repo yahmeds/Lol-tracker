@@ -1,9 +1,7 @@
 name: Poll Riot API
 
 on:
-  schedule:
-    - cron: '* * * * *'  
-  workflow_dispatch:      
+  workflow_dispatch:   
 
 jobs:
   poll:
