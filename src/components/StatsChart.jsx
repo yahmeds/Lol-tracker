@@ -11,32 +11,37 @@ function buildChartData(allGames) {
   for (let i = 29; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    d.setHours(0, 0, 0, 0)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    const key = `${y}-${m}-${day}`
     days.push({
       date: d,
-      dateStr: d.toDateString(),
+      dateStr: key,
       label: i === 0
         ? "Auj."
-        : d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
+        : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }),
       shortLabel: i === 0
         ? "Auj."
-        : d.toLocaleDateString('fr-FR', { weekday: 'short' }),
+        : d.toLocaleDateString("fr-FR", { weekday: "short" }),
       games: 0,
       minutes: 0,
     })
   }
 
+
   for (const g of allGames) {
-    const gDate = new Date(g.started_at).toDateString()
+    const gDate = g.started_at.slice(0, 10)
     const bucket = days.find(d => d.dateStr === gDate)
     if (bucket) {
       bucket.games += 1
       bucket.minutes += g.duration_min || 0
     }
   }
-
+ 
   return days
 }
+
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 
