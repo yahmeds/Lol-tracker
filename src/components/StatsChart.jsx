@@ -20,7 +20,7 @@ function buildChartData(allGames) {
       dateStr: key,
       label: i === 0
         ? "Auj."
-        : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }),
+        : d.toLocaleDateString("frsFR", { weekday: "short", day: "numeric" }),
       shortLabel: i === 0
         ? "Auj."
         : d.toLocaleDateString("fr-FR", { weekday: "short" }),
@@ -42,6 +42,22 @@ function buildChartData(allGames) {
   return days
 }
 
+// ─── Time format ───────────────────────────────────────────────────────
+
+function formatGameTime(totalMinutes) {
+  if (!totalMinutes) return "0min"
+  
+  const h = Math.floor(totalMinutes / 60)
+  const m = Math.round(totalMinutes % 60)
+
+  if (h > 0 && m > 0) {
+    return `${h}h${String(m).padStart(2, '0')}`
+  } else if (h > 0 && m === 0) {
+    return `${h}h`
+  } else {
+    return `${m}min`
+  }
+}
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
 
@@ -58,7 +74,7 @@ function CustomTooltip({ active, payload, label }) {
       {d?.minutes > 0 && (
         <div className={styles.tooltipRow}>
           <span className={styles.tooltipDot} style={{ background: 'var(--cyan)' }} />
-          <span>{Math.round(d.minutes / 60 * 10) / 10}h de jeu</span>
+          <span>{formatGameTime(d.minutes)}</span>
         </div>
       )}
     </div>
@@ -114,7 +130,11 @@ export default function StatsChart({ allGames }) {
           <BarChart data={data} barCategoryGap="20%" margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
             <XAxis
-              dataKey="shortLabel"
+              dataKey="dateStr" 
+              tickFormatter={(dateStr) => {
+                const match = data.find(d => d.dateStr === dateStr)
+                return match ? match.shortLabel : dateStr
+              }}
               tick={{ fill: 'var(--text-dim)', fontSize: 9, fontFamily: 'DM Mono' }}
               axisLine={false}
               tickLine={false}
@@ -128,20 +148,20 @@ export default function StatsChart({ allGames }) {
               width={28}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-            <Bar dataKey="games" radius={[3, 3, 0, 0]}>
-              {data.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={
-                    entry.dateStr === new Date().toDateString()
-                      ? 'var(--cyan)'
-                      : entry.games === maxGames && entry.games > 0
-                        ? 'var(--gold)'
-                        : 'rgba(200,168,75,0.35)'
-                  }
-                />
-              ))}
-            </Bar>
+              <Bar dataKey="games" radius={[3, 3, 0, 0]}>
+                {data.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={
+                      entry.shortLabel === 'Auj.'
+                        ? 'var(--cyan)'
+                        : entry.games === maxGames && entry.games > 0
+                          ? 'var(--gold)'
+                          : 'rgba(200,168,75,0.35)'
+                    }
+                  />
+                ))}
+              </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
