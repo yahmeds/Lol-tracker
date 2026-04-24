@@ -18,3 +18,19 @@ Lol Tracker monitors a player's in-game activity around the clock, logs every ga
 - **Cross-device sync** — settings saved to Supabase mean any device opening the app picks up the current configuration automatically
 - **PWA** — installable on Android via Chrome, runs fullscreen with no browser chrome
 ---
+
+## Tech Stack
+ 
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19 + Vite 8 |
+| Styling | CSS Modules with design tokens |
+| Charts | Recharts |
+| Database | Supabase (PostgreSQL) |
+| Hosting | Vercel |
+| CI/CD | GitHub Actions → Vercel CLI |
+| Cron | cron-job.org (every 5 minutes) |
+| Data source | Riot Games API v5 |
+| PWA | vite-plugin-pwa + Workbox |
+ 
+---
