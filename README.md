@@ -34,3 +34,24 @@ Lol Tracker monitors a player's in-game activity around the clock, logs every ga
 | PWA | vite-plugin-pwa + Workbox |
  
 ---
+
+## Getting Started
+ 
+### Prerequisites
+ 
+- Node.js 20+
+- A [Riot Games developer account](https://developer.riotgames.com) (free API key)
+- A [Supabase](https://supabase.com) project (free tier)
+- A [Vercel](https://vercel.com) account
+- A [cron-job.org](https://cron-job.org) account (free)
+
+### Local setup
+ 
+```bash
+git clone https://github.com/YOUR_USERNAME/coachscan.git
+cd coachscan
+npm install
+cp .env.example .env.local
+# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+npm run dev
+```
