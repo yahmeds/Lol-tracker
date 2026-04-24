@@ -55,3 +55,4 @@ cp .env.example .env.local
 # Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm run dev
 ```
+test
