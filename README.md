@@ -62,3 +62,13 @@ In your Supabase dashboard → SQL Editor → New query, paste the contents of `
  
 - `games` — one row per detected game session
 - `config` — single-row config read by the server-side cron
+
+### Environment variables
+ 
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only, never expose to client) |
+| `CRON_SECRET` | Shared secret to authenticate cron requests to `/api/poll` |
+ 
