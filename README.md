@@ -55,4 +55,10 @@ cp .env.example .env.local
 # Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm run dev
 ```
-test
+
+### Database setup
+ 
+In your Supabase dashboard → SQL Editor → New query, paste the contents of `supabase-schema.sql` and run it. This creates two tables:
+ 
+- `games` — one row per detected game session
+- `config` — single-row config read by the server-side cron
