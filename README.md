@@ -77,3 +77,26 @@ In your Supabase dashboard → SQL Editor → New query, paste the contents of `
 Open the deployed URL in Chrome on Android → menu → *Add to Home Screen*. The app runs in standalone mode with no browser UI.
  
 ---
+
+## How the Cron Works
+ 
+```
+cron-job.org (every 5 min)
+        │
+        ▼
+GET /api/poll  ──► reads config table (player + API key)
+        │
+        ▼
+Riot Spectator API  ──► player in game?
+        │
+   ┌────┴────┐
+  YES        NO
+   │          │
+   ▼          ▼
+insert     close any
+new game   open game
+in games   + calc duration
+table
+```
+ 
+---
