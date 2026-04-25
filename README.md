@@ -72,3 +72,8 @@ In your Supabase dashboard → SQL Editor → New query, paste the contents of `
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only, never expose to client) |
 | `CRON_SECRET` | Shared secret to authenticate cron requests to `/api/poll` |
  
+### Android installation
+ 
+Open the deployed URL in Chrome on Android → menu → *Add to Home Screen*. The app runs in standalone mode with no browser UI.
+ 
+---
