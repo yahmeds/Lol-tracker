@@ -112,3 +112,9 @@ npm run preview  # preview production build locally
 Feature branches trigger preview deployments on Vercel automatically. Merging to `main` deploys to production.
  
 ---
+
+## Known Limitations
+ 
+- Riot development API keys expire every 24 hours. For permanent use, request a personal API key through the Riot developer portal.
+- cron-job.org free tier runs every x minutes at best — games shorter than x minutes could theoretically be missed, though this is rare in practice.
+- Game duration is estimated from `started_at` to the moment the cron first detects the session has ended, not from Riot's own match data.
