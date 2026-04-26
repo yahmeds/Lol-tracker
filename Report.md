@@ -25,3 +25,26 @@ The first version was a **single self-contained HTML file** served via Netlify D
 This version worked but had a critical limitation: **polling only ran while the browser tab was open**. Closing the tab meant missing games entirely.
  
 ---
+
+## 3. Migration to React + Vite
+ 
+The project was restructured into a proper React application to support component reuse, maintainability, and future feature growth.
+ 
+**Architecture decisions made:**
+ 
+- **CSS Modules** over a utility framework — keeps styles scoped and colocated with components
+- **Custom hooks** (`useTracker`, `useSettings`) to isolate logic from UI
+- **Supabase** as the database — free PostgreSQL tier, JavaScript SDK, built-in Row Level Security
+- **Vercel** for hosting — zero-config React deployments, serverless function support
+- **vite-plugin-pwa** for PWA generation — manifest + service worker handled automatically
+**Project structure:**
+ 
+```
+src/
+├── components/    # UI components, each with its own CSS Module
+├── hooks/         # useTracker (polling), useSettings (config persistence)
+├── lib/           # riot.js (API client), supabase.js (DB operations)
+└── styles/        # global.css with CSS custom properties
+```
+ 
+---
