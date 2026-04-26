@@ -81,3 +81,23 @@ Several issues were encountered and resolved during setup:
  
 ---
  
+## 6. Server-Side Polling
+ 
+### The Problem
+ 
+Vercel hosts static files and serverless functions — it does not run persistent processes. The React app's polling loop runs in the browser, so closing the tab stops all monitoring.
+ 
+### First Attempt: Vercel Cron Jobs
+ 
+A `vercel.json` cron was configured to call `/api/poll` every minute. This was rejected immediately — **Vercel's free (Hobby) plan limits cron jobs to once per day**. Anything more frequent requires the Pro plan ($20/month).
+ 
+### Second Attempt: GitHub Actions Scheduler
+ 
+A `cron.yml` workflow was added with `schedule: '* * * * *'`. GitHub Actions does support cron scheduling, but in practice the free tier throttles scheduled workflows heavily — executions happened roughly **once per hour**, sometimes with gaps of 4+ hours. Completely unusable for detecting 30-minute game sessions.
+ 
+### Final Solution: cron-job.org
+ 
+An external cron service ([cron-job.org](https://cron-job.org)) was configured to call the Vercel endpoint every x minutes. This service is free and reliable, with execution logs available in the dashboard.
+ 
+The request includes an `Authorization: Bearer <secret>` header. The `/api/poll` serverless function validates this header against `process.env.CRON_SECRET` before proceeding.
+ 
