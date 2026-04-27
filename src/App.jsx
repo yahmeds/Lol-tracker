@@ -6,7 +6,6 @@ import PlayerCard from './components/PlayerCard'
 import DailyBoard from './components/DailyBoard'
 import StatsChart from './components/StatsChart'
 import SettingsModal from './components/SettingsModal'
-import PollProgress from './components/PollProgress'
 import Toast, { showToast } from './components/Toast'
 import styles from './App.module.css'
 
@@ -69,7 +68,6 @@ export default function App() {
           lastChecked={lastChecked}
           interval={settings.interval}
         />
-        <PollProgress interval={settings.interval} lastChecked={lastChecked} />
       </div>
 
       {/* Player card */}

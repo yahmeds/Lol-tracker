@@ -6,7 +6,6 @@ const SETTINGS_KEY = 'coachscan_settings'
 const defaultSettings = {
   apiKey: '',
   player: '',
-  interval: 60,
 }
 
 export function useSettings() {

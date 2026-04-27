@@ -13,7 +13,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-export async function saveConfig({ player, apiKey, interval }) {
+export async function saveConfig({ player, apiKey }) {
   if (!supabase) return
   const { error } = await supabase
     .from('config')
@@ -29,7 +29,7 @@ export async function loadConfig() {
     .eq('id', 1)
     .single()
   if (error) return null
-  return data ? { player: data.player, apiKey: data.api_key, interval: data.interval } : null
+  return data ? { player: data.player, apiKey: data.api_key } : null
 }
 
 // ─── Games ────────────────────────────────────────────────────────────────────
