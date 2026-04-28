@@ -1,15 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { resolvePUUID, getActiveGame, parsePlayer, playerSlug, getGamePhase, getQueueLabel } from '../lib/riot'
-import { saveGame, updateGameDuration, fetchGamesLast30Days } from '../lib/supabase'
+import { useState, useEffect } from 'react'
+import { fetchGamesLast30Days } from '../lib/supabase'
+import { parsePlayer, playerSlug } from '../lib/riot'
 
 const LOCAL_GAMES_KEY = 'coachscan_games'
 
-// ─── Local fallback storage ───────────────────────────────────────────────────
-
 function loadLocalGames() {
-  try {
-    return JSON.parse(localStorage.getItem(LOCAL_GAMES_KEY) || '[]')
-  } catch { return [] }
+  try { return JSON.parse(localStorage.getItem(LOCAL_GAMES_KEY) || '[]') }
+  catch { return [] }
 }
 
 function saveLocalGames(games) {
@@ -17,214 +14,73 @@ function saveLocalGames(games) {
 }
 
 function todayStr() {
-  return new Date().toDateString()
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useTracker(settings, isConfigured) {
-  const [status, setStatus] = useState('idle') // idle | resolving | watching | queue | loading | ingame | error
-  const [errorMsg, setErrorMsg] = useState('')
-  const [currentGame, setCurrentGame] = useState(null)
   const [allGames, setAllGames] = useState([])
-  const [puuid, setPuuid] = useState(null)
-  const [lastChecked, setLastChecked] = useState(null)
+  const [status, setStatus] = useState('idle')
+  const [lastRefresh, setLastRefresh] = useState(null)
 
-  const stateRef = useRef({})
-  const pollRef = useRef(null)
-  const notifiedGameIds = useRef(new Set())
-
-  // Sync ref for use inside intervals
-  stateRef.current = { settings, puuid, currentGame, allGames }
-
-  // ─── Load games ─────────────────────────────────────────────────────────────
-
-  async function loadGames(slug) {
-    try {
-      const remote = await fetchGamesLast30Days(slug)
-      if (remote.length > 0) {
-        setAllGames(remote)
-        saveLocalGames(remote)
-        return
-      }
-    } catch {}
-    setAllGames(loadLocalGames())
-  }
-
-  // ─── Add game ────────────────────────────────────────────────────────────────
-
-  function addGame(gameData, phase) {
-    const { settings: s } = stateRef.current
-    const { gameName, tagLine } = parsePlayer(s.player)
-    const slug = playerSlug(s.player)
-    const now = new Date()
-
-    const game = {
-      game_id: String(gameData.gameId),
-      player_slug: slug,
-      game_name: `${gameName}#${tagLine}`,
-      queue_id: gameData.gameQueueConfigId,
-      queue_label: getQueueLabel(gameData.gameQueueConfigId),
-      started_at: new Date(gameData.gameStartTime || Date.now()).toISOString(),
-      duration_min: null,
-      ended_at: null,
-      date_str: now.toDateString(),
-    }
-
-    setAllGames(prev => {
-      const exists = prev.find(g => g.game_id === game.game_id)
-      if (exists) return prev
-      const next = [...prev, game]
-      saveLocalGames(next)
-      return next
-    })
-
-    saveGame(game).catch(() => {})
-
-    // Send notification
-    if (!notifiedGameIds.current.has(game.game_id)) {
-      notifiedGameIds.current.add(game.game_id)
-      sendNotification(s.player, phase, game.queue_label)
-    }
-  }
-
-  // ─── End game ────────────────────────────────────────────────────────────────
-
-  function endGame(gameId, startedAt) {
-    const durationMin = Math.round((Date.now() - new Date(startedAt).getTime()) / 60000)
-    setAllGames(prev => {
-      const next = prev.map(g =>
-        g.game_id === gameId
-          ? { ...g, duration_min: durationMin, ended_at: new Date().toISOString() }
-          : g
-      )
-      saveLocalGames(next)
-      return next
-    })
-    updateGameDuration(gameId, durationMin).catch(() => {})
-  }
-
-  // ─── Poll ────────────────────────────────────────────────────────────────────
-
-  const poll = useCallback(async () => {
-    const { settings: s, puuid: pid, currentGame: cg } = stateRef.current
-    if (!pid || !s.apiKey) return
-
-    const { tagLine } = parsePlayer(s.player)
-
-    try {
-      const gameData = await getActiveGame(pid, tagLine, s.apiKey)
-      const phase = getGamePhase(gameData)
-      const gameId = String(gameData.gameId)
-
-      setCurrentGame(gameData)
-      setStatus(phase)
-      setLastChecked(new Date())
-
-      // New game detected
-      if (!cg || String(cg.gameId) !== gameId) {
-        addGame(gameData, phase)
-      }
-    } catch (err) {
-      setLastChecked(new Date())
-      if (err.status === 404) {
-        // Not in game
-        if (stateRef.current.currentGame) {
-          const cg = stateRef.current.currentGame
-          endGame(String(cg.gameId), cg.gameStartTime ? new Date(cg.gameStartTime).toISOString() : new Date().toISOString())
-        }
-        setCurrentGame(null)
-        setStatus('watching')
-      } else if (err.status === 401 || err.status === 403) {
-        setStatus('error')
-        setErrorMsg('Clé API invalide ou expirée')
-        stopPolling()
-      } else {
-        console.warn('Poll error:', err.message)
-      }
-    }
-  }, [])
-
-  function startPolling(intervalSec) {
-    stopPolling()
-    poll()
-    pollRef.current = setInterval(poll, intervalSec * 1000)
-  }
-
-  function stopPolling() {
-    if (pollRef.current) {
-      clearInterval(pollRef.current)
-      pollRef.current = null
-    }
-  }
-
-  // ─── Init / restart when settings change ─────────────────────────────────────
-
+  // Load games from Supabase on mount and every 2 minutes
   useEffect(() => {
-    if (!isConfigured) {
+    if (!isConfigured || !settings.player) {
       setStatus('idle')
-      stopPolling()
       return
     }
 
-    const { gameName, tagLine } = parsePlayer(settings.player)
     const slug = playerSlug(settings.player)
 
-    setStatus('resolving')
-    setErrorMsg('')
+    async function refresh() {
+      try {
+        const remote = await fetchGamesLast30Days(slug)
+        if (remote.length > 0) {
+          setAllGames(remote)
+          saveLocalGames(remote)
+        } else {
+          setAllGames(loadLocalGames())
+        }
 
-    resolvePUUID(gameName, tagLine, settings.apiKey)
-      .then(data => {
-        setPuuid(data.puuid)
+        // Detect if player is currently in game (open game with no ended_at)
+        const openGame = remote.find(g => !g.ended_at)
+        setStatus(openGame ? 'ingame' : 'watching')
+        setLastRefresh(new Date())
+      } catch {
+        setAllGames(loadLocalGames())
         setStatus('watching')
-        loadGames(slug)
-        startPolling(settings.interval)
-      })
-      .catch(err => {
-        setStatus('error')
-        setErrorMsg(err.message || 'Erreur Riot API')
-      })
+      }
+    }
 
-    return () => stopPolling()
-  }, [settings.apiKey, settings.player, settings.interval, isConfigured])
+    refresh()
+    const interval = setInterval(refresh, 2 * 60 * 1000) // refresh every 2 min
+    return () => clearInterval(interval)
+  }, [settings.player, isConfigured])
 
-  // Sync puuid into ref
-  useEffect(() => { stateRef.current.puuid = puuid }, [puuid])
-
-  // ─── Derived daily stats ──────────────────────────────────────────────────────
-
-  const todayGames = allGames.filter(g => g.date_str === todayStr())
+  // Derived daily stats
+  const today = todayStr()
+  const todayGames = allGames.filter(g => g.started_at?.slice(0, 10) === today)
   const totalMinToday = todayGames.reduce((acc, g) => acc + (g.duration_min || 0), 0)
+
+  // Current game (open session)
+  const currentGame = allGames.find(g => !g.ended_at) || null
 
   return {
     status,
-    errorMsg,
+    errorMsg: '',
     currentGame,
     allGames,
     todayGames,
     totalMinToday,
-    lastChecked,
+    lastChecked: lastRefresh,
   }
 }
-
-// ─── Notifications ────────────────────────────────────────────────────────────
 
 export function requestNotifPermission() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission()
-  }
-}
-
-function sendNotification(player, phase, queueLabel) {
-  const titles = {
-    queue: `⏳ ${player} est en sélection !`,
-    loading: `⚔️ ${player} charge une game !`,
-    ingame: `🎮 ${player} est en game !`,
-  }
-  const title = titles[phase] || `🎮 ${player} a lancé une game !`
-  const body = queueLabel || ''
-
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body, icon: '/icons/icon-192.png' })
   }
 }

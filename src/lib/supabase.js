@@ -29,7 +29,7 @@ export async function loadConfig() {
     .eq('id', 1)
     .single()
   if (error) return null
-  return data ? { player: data.player, apiKey: data.api_key } : null
+  return data ? { player: data.player } : null
 }
 
 // ─── Games ────────────────────────────────────────────────────────────────────

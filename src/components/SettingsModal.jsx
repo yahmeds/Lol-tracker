@@ -48,9 +48,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onSave }) {
             </button>
           </div>
           <div className={styles.hint}>
-            → <a href="https://developer.riotgames.com" target="_blank" rel="noreferrer" className={styles.link}>
-              developer.riotgames.com
-            </a> (gratuit, clé dev valable 24h)
+            Stockée localement uniquement — jamais envoyée au serveur
           </div>
         </div>
 
@@ -67,7 +65,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onSave }) {
         </div>
 
         <button className={styles.btnPrimary} onClick={handleSave}>
-          DÉMARRER LE TRACKING
+          SAUVEGARDER
         </button>
         <button className={styles.btnSecondary} onClick={onClose}>
           Annuler

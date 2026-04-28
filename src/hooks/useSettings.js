@@ -20,19 +20,22 @@ export function useSettings() {
 
   useEffect(() => {
     loadConfig().then(remote => {
-      if (remote?.player && remote?.apiKey) {
-        const merged = { ...defaultSettings, ...remote }
-        setSettingsState(merged)
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
+      if (remote?.player) {
+        setSettingsState(prev => {
+          const merged = { ...prev, player: remote.player }
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
+          return merged
+        })
       }
     }).catch(() => {})
   }, [])
+
 
   async function saveSettings(next) {
     const merged = { ...settings, ...next }
     setSettingsState(merged)
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
-    await saveConfig(merged)
+    await saveConfig({ player: merged.player })
   }
 
   function clearSettings() {
