@@ -68,22 +68,23 @@ export default async function handler(req, res) {
       )
     } catch (err) {
       if (err.status === 404) {
-        const { data: openGame } = await supabase
-          .from('games')
-          .select('*')
-          .eq('player_slug', player.toLowerCase().replace('#', '-'))
-          .is('ended_at', null)
-          .single()
+    const { data: openGames } = await supabase
+      .from('games')
+      .select('*')
+      .eq('player_slug', player.toLowerCase().replace('#', '-'))
+      .is('ended_at', null)
 
-        if (openGame) {
-          const durationMin = Math.round(
-            (Date.now() - new Date(openGame.started_at).getTime()) / 60000
-          )
-          await supabase
-            .from('games')
-            .update({ ended_at: new Date().toISOString(), duration_min: durationMin })
-            .eq('id', openGame.id)
-        }
+    if (openGames?.length > 0) {
+      for (const openGame of openGames) {
+        const durationMin = Math.round(
+          (Date.now() - new Date(openGame.started_at).getTime()) / 60000
+        )
+        await supabase
+          .from('games')
+          .update({ ended_at: new Date().toISOString(), duration_min: durationMin })
+          .eq('id', openGame.id)
+      }
+    }
 
         return res.status(200).json({ message: 'Player not in game' })
       }
