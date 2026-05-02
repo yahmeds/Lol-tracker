@@ -9,10 +9,15 @@ function formatHoursMin(totalMin) {
 
 function toDateKey(date) {
   const d = new Date(date)
-  // Si avant 8h, on rattache au jour précédent
-  if (d.getHours() < 8) {
-    d.setDate(d.getDate() - 1)
-  }
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function gameToDateKey(startedAt) {
+  const d = new Date(startedAt)
+  if (d.getHours() < 8) d.setDate(d.getDate() - 1)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
@@ -42,7 +47,7 @@ function Calendar({ allGames, selectedKey, onSelect }) {
   const gamesByDay = useMemo(() => {
     const map = {}
     for (const g of allGames) {
-      const key = toDateKey(new Date(g.started_at))
+      const key = gameToDateKey(g.started_at)
       if (!map[key]) map[key] = []
       map[key].push(g)
     }
@@ -189,7 +194,7 @@ function DayDetail({ dateKey, games, isToday, countdown }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function DailyBoard({ todayGames, totalMinToday, allGames }) {
-  const todayKey = toDateKey(new Date())
+  const todayKey = gameToDateKey(new Date())
   const [selectedKey, setSelectedKey] = useState(todayKey)
   const [calOpen, setCalOpen] = useState(false)
   const countdown = useResetCountdown()
@@ -197,7 +202,7 @@ export default function DailyBoard({ todayGames, totalMinToday, allGames }) {
   const gamesByDay = useMemo(() => {
     const map = {}
     for (const g of allGames) {
-      const key = toDateKey(new Date(g.started_at))
+      const key = gameToDateKey(g.started_at)
       if (!map[key]) map[key] = []
       map[key].push(g)
     }
