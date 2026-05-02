@@ -156,6 +156,9 @@ function DayDetail({ dateKey, games, isToday, countdown }) {
               <div className={styles.itemLeft}>
                 <span className={styles.itemTime}>
                   {new Date(g.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  {g.ended_at && (
+                    <> → {new Date(g.ended_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</>
+                  )}
                 </span>
                 {g.queue_label && (
                   <span className={styles.itemQueue}>{g.queue_label}</span>
