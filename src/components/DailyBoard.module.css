@@ -334,3 +334,39 @@
   border-color: var(--gold);
   color: var(--gold);
 }
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.summaryPart {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.summaryType_pause {
+  color: var(--text-dim);
+  background: transparent;
+  border-color: transparent;
+}
+
+.summaryType_end {
+  color: var(--text-dim);
+}
+
+.summaryType_live {
+  color: var(--red);
+  border-color: rgba(224,64,64,0.3);
+  background: rgba(224,64,64,0.08);
+}

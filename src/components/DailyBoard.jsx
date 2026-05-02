@@ -39,6 +39,80 @@ function useResetCountdown() {
   return `${h}h ${String(m).padStart(2, '0')}m`
 }
 
+function hhmm(date) {
+  return new Date(date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
+
+
+function generateSummary(games) {
+  if (games.length === 0) return null
+ 
+  const sorted = [...games].sort((a, b) => new Date(a.started_at) - new Date(b.started_at))
+ 
+  const SESSION_GAP = 30
+  const sessions = []
+  let current = [sorted[0]]
+ 
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = current[current.length - 1]
+    const prevEnd = prev.ended_at
+      ? new Date(prev.ended_at)
+      : new Date(new Date(prev.started_at).getTime() + (prev.duration_min || 30) * 60000)
+    const gap = (new Date(sorted[i].started_at) - prevEnd) / 60000
+ 
+    if (gap <= SESSION_GAP) {
+      current.push(sorted[i])
+    } else {
+      sessions.push(current)
+      current = [sorted[i]]
+    }
+  }
+  sessions.push(current)
+ 
+  const parts = []
+ 
+  sessions.forEach((session, idx) => {
+    const count = session.length
+    const firstGame = session[0]
+    const lastGame = session[session.length - 1]
+    const startTime = hhmm(firstGame.started_at)
+    const endTime = lastGame.ended_at ? hhmm(lastGame.ended_at) : null
+ 
+    if (count === 1) {
+      parts.push({ type: 'game', text: `1 game à ${startTime}${endTime ? ` → ${endTime}` : ''}` })
+    } else {
+      parts.push({ type: 'game', text: `${count} games de ${startTime}${endTime ? ` à ${endTime}` : ''}` })
+    }
+ 
+    if (idx < sessions.length - 1) {
+      const nextSession = sessions[idx + 1]
+      const endOfCurrent = lastGame.ended_at
+        ? new Date(lastGame.ended_at)
+        : new Date(new Date(lastGame.started_at).getTime() + (lastGame.duration_min || 30) * 60000)
+      const startOfNext = new Date(nextSession[0].started_at)
+      const gapMin = Math.round((startOfNext - endOfCurrent) / 60000)
+ 
+      if (gapMin >= 60) {
+        const gapH = Math.floor(gapMin / 60)
+        const gapM = gapMin % 60
+        const gapStr = gapM > 0 ? `${gapH}h${String(gapM).padStart(2,'0')}` : `${gapH}h`
+        parts.push({ type: 'pause', text: `pause ${gapStr}` })
+      } else {
+        parts.push({ type: 'pause', text: `pause ${gapMin} min` })
+      }
+    }
+  })
+ 
+ /* const lastGame = sorted[sorted.length - 1]
+  if (!lastGame.ended_at) {
+    parts.push({ type: 'live', text: 'session en cours' })
+  } else {
+    parts.push({ type: 'end', text: `inactif depuis ${hhmm(lastGame.ended_at)}` })
+  } */
+ 
+  return parts
+}
+
 // ─── Calendar ────────────────────────────────────────────────────────────────
 
 function Calendar({ allGames, selectedKey, onSelect }) {
@@ -142,6 +216,7 @@ function DayDetail({ dateKey, games, isToday, countdown }) {
     : date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   const totalMin = games.reduce((a, g) => a + (g.duration_min || 0), 0)
+  const summary = generateSummary(games)
 
   return (
     <div className={styles.dayDetail}>
@@ -162,6 +237,19 @@ function DayDetail({ dateKey, games, isToday, countdown }) {
           <div className={styles.statUnit}>estimé</div>
         </div>
       </div>
+
+      {summary && (
+        <div className={styles.summary}>
+          {summary.map((part, i) => (
+            <span
+              key={i}
+              className={`${styles.summaryPart} ${styles['summaryType_' + part.type] || ''}`}
+            >
+              {part.type === 'pause' ? '···' : part.type === 'end' ? '◻' : part.type === 'live' ? '●' : ''} {part.text}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className={styles.historyTitle}>PARTIES</div>
       {games.length === 0 ? (
