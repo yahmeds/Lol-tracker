@@ -27,7 +27,12 @@ function gameToDateKey(startedAt) {
 function useResetCountdown() {
   const now = new Date()
   const midnight = new Date(now)
-  midnight.setHours(24, 0, 0, 0)
+  if (now.getHours() < 8) {
+    midnight.setHours(8, 0, 0, 0)
+  } else {
+    midnight.setDate(midnight.getDate() + 1)
+    midnight.setHours(8, 0, 0, 0)
+  }
   const diff = Math.floor((midnight - now) / 1000)
   const h = Math.floor(diff / 3600)
   const m = Math.floor((diff % 3600) / 60)
