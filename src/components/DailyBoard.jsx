@@ -8,7 +8,15 @@ function formatHoursMin(totalMin) {
 }
 
 function toDateKey(date) {
-  return date.toISOString().slice(0, 10) // "2025-04-11"
+  const d = new Date(date)
+  // Si avant 8h, on rattache au jour précédent
+  if (d.getHours() < 8) {
+    d.setDate(d.getDate() - 1)
+  }
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function useResetCountdown() {

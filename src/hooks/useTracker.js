@@ -13,12 +13,17 @@ function saveLocalGames(games) {
   localStorage.setItem(LOCAL_GAMES_KEY, JSON.stringify(games))
 }
 
-function todayStr() {
-  const d = new Date()
+function coachingDateKey(startedAt) {
+  const d = new Date(startedAt)
+  if (d.getHours() < 8) d.setDate(d.getDate() - 1)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function todayStr() {
+  return coachingDateKey(new Date())
 }
 
 export function useTracker(settings, isConfigured) {
@@ -62,7 +67,7 @@ export function useTracker(settings, isConfigured) {
 
   // Derived daily stats
   const today = todayStr()
-  const todayGames = allGames.filter(g => g.started_at?.slice(0, 10) === today)
+  const todayGames = allGames.filter(g => coachingDateKey(g.started_at) === today)
   const totalMinToday = todayGames.reduce((acc, g) => acc + (g.duration_min || 0), 0)
 
   // Current game (open session)

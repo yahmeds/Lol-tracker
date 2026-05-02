@@ -4,7 +4,16 @@ import {
 } from 'recharts'
 import styles from './StatsChart.module.css'
 
-// ─── Build last 30 days buckets ───────────────────────────────────────────────
+function gameDateKey(startedAt) {
+  const d = new Date(startedAt)
+  if (d.getHours() < 8) {
+    d.setDate(d.getDate() - 1)
+  }
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 function buildChartData(allGames) {
   const days = []
@@ -31,7 +40,7 @@ function buildChartData(allGames) {
 
 
   for (const g of allGames) {
-    const gDate = g.started_at.slice(0, 10)
+    const gDate = gameDateKey(g.started_at)
     const bucket = days.find(d => d.dateStr === gDate)
     if (bucket) {
       bucket.games += 1
