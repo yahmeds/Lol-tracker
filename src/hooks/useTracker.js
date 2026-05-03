@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react'
 import { fetchGamesLast30Days } from '../lib/supabase'
 import { parsePlayer, playerSlug } from '../lib/riot'
 
-const LOCAL_GAMES_KEY = 'coachscan_games'
+const LOCAL_GAMES_KEY_PREFIX = 'coachscan_games_'
 
-function loadLocalGames() {
-  try { return JSON.parse(localStorage.getItem(LOCAL_GAMES_KEY) || '[]') }
+function loadLocalGames(slug) {
+  try { return JSON.parse(localStorage.getItem(LOCAL_GAMES_KEY_PREFIX + slug) || '[]') }
   catch { return [] }
 }
 
-function saveLocalGames(games) {
-  localStorage.setItem(LOCAL_GAMES_KEY, JSON.stringify(games))
+function saveLocalGames(slug, games) {
+  localStorage.setItem(LOCAL_GAMES_KEY_PREFIX + slug, JSON.stringify(games))
 }
 
 function coachingDateKey(startedAt) {
@@ -40,22 +40,25 @@ export function useTracker(settings, isConfigured) {
 
     const slug = playerSlug(settings.player)
 
+    // Reset to this player's cached games immediately so we don't show the
+    // previous player's data while the fetch is in flight.
+    setAllGames(loadLocalGames(slug))
+
     async function refresh() {
       try {
         const remote = await fetchGamesLast30Days(slug)
-        if (remote.length > 0) {
-          setAllGames(remote)
-          saveLocalGames(remote)
-        } else {
-          setAllGames(loadLocalGames())
-        }
+        setAllGames(remote)
+        saveLocalGames(slug, remote)
 
         // Detect if player is currently in game (open game with no ended_at)
-        const openGame = remote.find(g => !g.ended_at)
+        const THREE_HOURS = 3 * 60 * 60 * 1000
+        const openGame = remote.find(g =>
+          !g.ended_at && (Date.now() - new Date(g.started_at).getTime()) < THREE_HOURS
+        )
         setStatus(openGame ? 'ingame' : 'watching')
         setLastRefresh(new Date())
       } catch {
-        setAllGames(loadLocalGames())
+        setAllGames(loadLocalGames(slug))
         setStatus('watching')
       }
     }
@@ -71,7 +74,10 @@ export function useTracker(settings, isConfigured) {
   const totalMinToday = todayGames.reduce((acc, g) => acc + (g.duration_min || 0), 0)
 
   // Current game (open session)
-  const currentGame = allGames.find(g => !g.ended_at) || null
+const THREE_HOURS = 3 * 60 * 60 * 1000
+const currentGame = allGames.find(g =>
+  !g.ended_at && (Date.now() - new Date(g.started_at).getTime()) < THREE_HOURS
+) || null
 
   return {
     status,
