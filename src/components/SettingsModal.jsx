@@ -21,7 +21,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onSave }) {
       alert('Format attendu : NomJoueur#TAG (ex: ALDERIATE#EUW)')
       return
     }
-    onSave({ apiKey: apiKey.trim(), player: player.trim(), interval })
+    onSave({ apiKey: apiKey.trim(), player: player.trim() })
     onClose()
   }
 
