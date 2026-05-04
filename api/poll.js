@@ -29,6 +29,27 @@ async function riotFetch(url, apiKey) {
   return res.json()
 }
 
+async function notifyTelegram(text) {
+  const token  = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) return
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true,
+      }),
+    })
+    if (!res.ok) console.error('Telegram notify failed:', res.status)
+  } catch (err) {
+    console.error('Telegram notify error:', err.message)
+  }
+}
+
 export default async function handler(req, res) {
     const authHeader = req.headers['authorization']
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -111,6 +132,12 @@ export default async function handler(req, res) {
         started_at: new Date(gameData.gameStartTime || Date.now()).toISOString(),
         date_str: new Date().toDateString(),
       })
+
+      const queueLabel = QUEUE_LABELS[gameData.gameQueueConfigId] || `Mode ${gameData.gameQueueConfigId}`
+      const timeStr = new Date(gameData.gameStartTime || Date.now()).toLocaleTimeString('fr-FR', {
+        hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris',
+      })
+      await notifyTelegram(`🎮 *${player}* vient de démarrer une partie *${queueLabel}* à ${timeStr}`)
 
       return res.status(200).json({ message: `New game detected: ${gameId}` })
     }
