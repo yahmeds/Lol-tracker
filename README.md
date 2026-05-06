@@ -10,6 +10,7 @@ Lol Tracker monitors a player's in-game activity around the clock, logs every ga
  
 - **Live game detection** — polls the Riot Games API every x minutes via an external cron service
 - **Push notifications** — browser notifications fire the moment a game is detected
+- **Telegram notifications** — optional bot pings the coach on Telegram when a new game starts (works even when the PWA is closed)
 - **Queue phase tracking** — distinguishes between champion select, loading screen, and in-game states
 - **Daily board** — games played and estimated playtime for any selected day, with live indicators for ongoing sessions
 - **Interactive calendar** — monthly view with color-coded activity dots, click any day to inspect its sessions
@@ -71,6 +72,8 @@ In your Supabase dashboard → SQL Editor → New query, paste the contents of `
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only, never expose to client) |
 | `CRON_SECRET` | Shared secret to authenticate cron requests to `/api/poll` |
+| `TELEGRAM_BOT_TOKEN` | *(optional)* Telegram bot token from [@BotFather](https://t.me/BotFather) — leave unset to disable Telegram notifications |
+| `TELEGRAM_CHAT_ID` | *(optional)* Your personal Telegram chat id, retrievable via `https://api.telegram.org/bot<TOKEN>/getUpdates` after sending `/start` to your bot |
  
 ### Android installation
  
