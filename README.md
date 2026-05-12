@@ -121,3 +121,14 @@ Feature branches trigger preview deployments on Vercel automatically. Merging to
 - Riot development API keys expire every 24 hours. For permanent use, request a personal API key through the Riot developer portal.
 - cron-job.org free tier runs every x minutes at best — games shorter than x minutes could theoretically be missed, though this is rare in practice.
 - Game duration is estimated from `started_at` to the moment the cron first detects the session has ended, not from Riot's own match data.
+
+---
+
+## Roadmap
+
+**Planned features for future releases:**
+
+- **Multi-player tracking** — monitor multiple players simultaneously from a single app instance (e.g., track a full team's practice sessions). Switch between players via a dropdown selector.
+- **Match results** — fetch end-of-game stats (W/L, KDA, champion) via Riot's Match-V5 API for deeper coaching insights.
+- **Tilt detection** — alert the coach when a player loses N consecutive games or hits longer losing streaks.
+- **Export & sharing** — export daily/weekly stats as CSV or shareable reports for coaching reviews.
