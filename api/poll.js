@@ -50,8 +50,88 @@ async function notifyTelegram(text) {
   }
 }
 
+async function pollSinglePlayer(player, apiKey, puuids) {
+  const [gameName, tagLine] = player.split('#')
+  const { account, spectator } = getRegions(tagLine)
+  const playerSlug = player.toLowerCase().replace('#', '-')
+
+  let puuid = puuids[playerSlug]
+  let puuidsUpdated = false
+
+  // Resolve PUUID if not cached
+  if (!puuid) {
+    const accountData = await riotFetch(
+      `https://${account}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
+      apiKey
+    )
+    puuid = accountData.puuid
+    puuids[playerSlug] = puuid
+    puuidsUpdated = true
+  }
+
+  // Poll for active game
+  let gameData = null
+  try {
+    gameData = await riotFetch(
+      `https://${spectator}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/${puuid}`,
+      apiKey
+    )
+  } catch (err) {
+    if (err.status === 404) {
+      // Player not in game: close any open games for this player
+      const { data: openGames } = await supabase
+        .from('games')
+        .select('*')
+        .eq('player_slug', playerSlug)
+        .is('ended_at', null)
+
+      if (openGames?.length > 0) {
+        for (const openGame of openGames) {
+          const durationMin = Math.round(
+            (Date.now() - new Date(openGame.started_at).getTime()) / 60000
+          )
+          await supabase
+            .from('games')
+            .update({ ended_at: new Date().toISOString(), duration_min: durationMin })
+            .eq('id', openGame.id)
+        }
+      }
+      return { puuidsUpdated, puuids }
+    }
+    throw err
+  }
+
+  // Game found: insert if new
+  const gameId = String(gameData.gameId)
+  const { data: existing } = await supabase
+    .from('games')
+    .select('id')
+    .eq('game_id', gameId)
+    .single()
+
+  if (!existing) {
+    await supabase.from('games').insert({
+      game_id: gameId,
+      player_slug: playerSlug,
+      game_name: player,
+      queue_id: gameData.gameQueueConfigId,
+      queue_label: QUEUE_LABELS[gameData.gameQueueConfigId] || `Mode ${gameData.gameQueueConfigId}`,
+      started_at: new Date(gameData.gameStartTime || Date.now()).toISOString(),
+      date_str: new Date().toDateString(),
+    })
+
+    const queueLabel = QUEUE_LABELS[gameData.gameQueueConfigId] || `Mode ${gameData.gameQueueConfigId}`
+    const timeStr = new Date(gameData.gameStartTime || Date.now()).toLocaleTimeString('fr-FR', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris',
+    })
+    await notifyTelegram(`🎮 *${player}* vient de démarrer une partie *${queueLabel}* à ${timeStr}`)
+  }
+
+  return { puuidsUpdated, puuids }
+}
+
 export default async function handler(req, res) {
-    const authHeader = req.headers['authorization']
+  const authHeader = req.headers['authorization']
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
@@ -63,86 +143,39 @@ export default async function handler(req, res) {
       .eq('id', 1)
       .single()
 
-    if (configError || !config?.api_key || !config?.player) {
+    if (configError || !config?.api_key) {
       return res.status(200).json({ message: 'No config found, skipping' })
     }
 
-    const { api_key, player } = config
-    const [gameName, tagLine] = player.split('#')
-    const { account, spectator } = getRegions(tagLine)
-
-    let puuid = config.puuid
-    if (!puuid) {
-      const accountData = await riotFetch(
-        `https://${account}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
-        api_key
-      )
-      puuid = accountData.puuid
-      await supabase.from('config').update({ puuid }).eq('id', 1)
+    // Backward compatibility: if players array is empty, fallback to single player
+    const players = config.players?.length ? config.players : (config.player ? [config.player] : [])
+    if (players.length === 0) {
+      return res.status(200).json({ message: 'No players configured, skipping' })
     }
 
-    let gameData = null
-    try {
-      gameData = await riotFetch(
-        `https://${spectator}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/${puuid}`,
-        api_key
-      )
-    } catch (err) {
-      if (err.status === 404) {
-    const { data: openGames } = await supabase
-      .from('games')
-      .select('*')
-      .eq('player_slug', player.toLowerCase().replace('#', '-'))
-      .is('ended_at', null)
+    const { api_key } = config
+    let puuids = config.puuids || {}
+    let puuidsUpdated = false
 
-    if (openGames?.length > 0) {
-      for (const openGame of openGames) {
-        const durationMin = Math.round(
-          (Date.now() - new Date(openGame.started_at).getTime()) / 60000
-        )
-        await supabase
-          .from('games')
-          .update({ ended_at: new Date().toISOString(), duration_min: durationMin })
-          .eq('id', openGame.id)
+    for (const player of players) {
+      try {
+        const result = await pollSinglePlayer(player, api_key, puuids)
+        if (result.puuidsUpdated) {
+          puuids = result.puuids
+          puuidsUpdated = true
+        }
+      } catch (err) {
+        console.error(`Error polling ${player}:`, err.message)
+        // Continue with next player instead of failing entirely
       }
     }
 
-        return res.status(200).json({ message: 'Player not in game' })
-      }
-
-      return res.status(200).json({ message: `Riot API error: ${err.message}` })
+    // Save updated PUUIDs cache if anything changed
+    if (puuidsUpdated) {
+      await supabase.from('config').update({ puuids }).eq('id', 1)
     }
 
-    const gameId = String(gameData.gameId)
-    const playerSlug = player.toLowerCase().replace('#', '-')
-
-    const { data: existing } = await supabase
-      .from('games')
-      .select('id')
-      .eq('game_id', gameId)
-      .single()
-
-    if (!existing) {
-      await supabase.from('games').insert({
-        game_id: gameId,
-        player_slug: playerSlug,
-        game_name: player,
-        queue_id: gameData.gameQueueConfigId,
-        queue_label: QUEUE_LABELS[gameData.gameQueueConfigId] || `Mode ${gameData.gameQueueConfigId}`,
-        started_at: new Date(gameData.gameStartTime || Date.now()).toISOString(),
-        date_str: new Date().toDateString(),
-      })
-
-      const queueLabel = QUEUE_LABELS[gameData.gameQueueConfigId] || `Mode ${gameData.gameQueueConfigId}`
-      const timeStr = new Date(gameData.gameStartTime || Date.now()).toLocaleTimeString('fr-FR', {
-        hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris',
-      })
-      await notifyTelegram(`🎮 *${player}* vient de démarrer une partie *${queueLabel}* à ${timeStr}`)
-
-      return res.status(200).json({ message: `New game detected: ${gameId}` })
-    }
-
-    return res.status(200).json({ message: `Game ${gameId} already tracked` })
+    return res.status(200).json({ message: `Polled ${players.length} player(s)` })
 
   } catch (err) {
     console.error('Cron error:', err)

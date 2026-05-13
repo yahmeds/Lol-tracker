@@ -93,3 +93,24 @@
   color: var(--gold) !important;
   border: 1px solid var(--border);
 }
+
+.playerSelector {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 10px 12px;
+  transition: border-color 0.2s;
+}
+
+.playerSelector:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.playerSelector:hover {
+  border-color: var(--text-dim);
+}

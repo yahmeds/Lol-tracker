@@ -5,14 +5,23 @@ const SETTINGS_KEY = 'coachscan_settings'
 
 const defaultSettings = {
   apiKey: '',
-  player: '',
+  players: [],
+  currentPlayer: '',
 }
 
 export function useSettings() {
   const [settings, setSettingsState] = useState(() => {
     try {
       const stored = localStorage.getItem(SETTINGS_KEY)
-      return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings
+      if (!stored) return defaultSettings
+      const parsed = JSON.parse(stored)
+      // Migration: old format had 'player' (string), new format has 'players' (array)
+      if (parsed.player && !parsed.players?.length) {
+        parsed.players = [parsed.player]
+        parsed.currentPlayer = parsed.currentPlayer || parsed.player
+        delete parsed.player
+      }
+      return { ...defaultSettings, ...parsed }
     } catch {
       return defaultSettings
     }
@@ -22,7 +31,7 @@ export function useSettings() {
     const merged = { ...settings, ...next }
     setSettingsState(merged)
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
-    await saveConfig({ player: merged.player })
+    await saveConfig({ players: merged.players })
   }
 
   function clearSettings() {
@@ -30,17 +39,7 @@ export function useSettings() {
     localStorage.removeItem(SETTINGS_KEY)
   }
 
-  const isConfigured = !!(settings.apiKey && settings.player)
+  const isConfigured = !!(settings.apiKey && settings.currentPlayer)
 
   return { settings, saveSettings, clearSettings, isConfigured }
-}
-
-//DEBUG
-async function saveSettings(next) {
-  const merged = { ...settings, ...next }
-  setSettingsState(merged)
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged))
-  console.log('Saving to Supabase:', merged)
-  const result = await saveConfig(merged)
-  console.log('Supabase result:', result)
 }

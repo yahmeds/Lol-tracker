@@ -5,23 +5,42 @@ import styles from './SettingsModal.module.css'
 
 export default function SettingsModal({ isOpen, onClose, settings, onSave }) {
   const [apiKey, setApiKey]   = useState('')
-  const [player, setPlayer]   = useState('')
+  const [newPlayer, setNewPlayer] = useState('')
   const [showKey, setShowKey] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
       setApiKey(settings.apiKey || '')
-      setPlayer(settings.player || '')
+      setNewPlayer('')
     }
   }, [isOpen, settings])
 
   function handleSave() {
     if (!apiKey.trim()) { alert('Entre ta clé API Riot Games'); return }
-    if (!player.trim() || !player.includes('#')) {
-      alert('Format attendu : NomJoueur#TAG (ex: ALDERIATE#EUW)')
+
+    let playersToSave = settings.players || []
+    let currentPlayerToSet = settings.currentPlayer
+
+    if (newPlayer.trim()) {
+      if (!newPlayer.includes('#')) {
+        alert('Format attendu : NomJoueur#TAG (ex: ALDERIATE#EUW)')
+        return
+      }
+      const playerTrimmed = newPlayer.trim()
+      playersToSave = [...playersToSave, playerTrimmed]
+      currentPlayerToSet = playerTrimmed
+    }
+
+    if (playersToSave.length === 0) {
+      alert('Tu dois avoir au moins un joueur tracké')
       return
     }
-    onSave({ apiKey: apiKey.trim(), player: player.trim() })
+
+    onSave({
+      apiKey: apiKey.trim(),
+      players: playersToSave,
+      currentPlayer: currentPlayerToSet
+    })
     onClose()
   }
 
@@ -53,15 +72,33 @@ export default function SettingsModal({ isOpen, onClose, settings, onSave }) {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Joueur (GameName#TagLine)</label>
+          <label className={styles.label}>Joueurs trackés</label>
+          {settings.players && settings.players.length > 0 ? (
+            <div className={styles.playersList}>
+              {settings.players.map(p => (
+                <div key={p} className={styles.playerItem}>
+                   {p}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.hint}>Aucun joueur tracké pour le moment</div>
+          )}
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Ajouter un joueur</label>
           <input
             type="text"
             className={styles.input}
-            value={player}
-            onChange={e => setPlayer(e.target.value)}
-            placeholder="ALDERIATE#EUW"
+            value={newPlayer}
+            onChange={e => setNewPlayer(e.target.value)}
+            placeholder="NomJoueur#TAG (ex: ALDERIATE#EUW)"
             autoComplete="off"
           />
+          <div className={styles.hint}>
+            Laisse vide pour garder les joueurs actuels
+          </div>
         </div>
 
         <button className={styles.btnPrimary} onClick={handleSave}>

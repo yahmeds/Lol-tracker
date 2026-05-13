@@ -33,12 +33,12 @@ export function useTracker(settings, isConfigured) {
 
   // Load games from Supabase on mount and every 2 minutes
   useEffect(() => {
-    if (!isConfigured || !settings.player) {
+    if (!isConfigured || !settings.currentPlayer) {
       setStatus('idle')
       return
     }
 
-    const slug = playerSlug(settings.player)
+    const slug = playerSlug(settings.currentPlayer)
 
     // Reset to this player's cached games immediately so we don't show the
     // previous player's data while the fetch is in flight.
@@ -66,7 +66,7 @@ export function useTracker(settings, isConfigured) {
     refresh()
     const interval = setInterval(refresh, 2 * 60 * 1000) // refresh every 2 min
     return () => clearInterval(interval)
-  }, [settings.player, isConfigured])
+  }, [settings.currentPlayer, isConfigured])
 
   // Derived daily stats
   const today = todayStr()

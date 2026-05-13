@@ -9,6 +9,20 @@ import SettingsModal from './components/SettingsModal'
 import Toast, { showToast } from './components/Toast'
 import styles from './App.module.css'
 
+function PlayerSelector({ players, current, onChange }) {
+  if (players.length < 2) return null
+  return (
+    <select
+      value={current}
+      onChange={e => onChange(e.target.value)}
+      className={styles.playerSelector}
+      aria-label="Sélectionner un joueur"
+    >
+      {players.map(p => <option key={p} value={p}>{p}</option>)}
+    </select>
+  )
+}
+
 export default function App() {
   const { settings, saveSettings, isConfigured } = useSettings()
   const [modalOpen, setModalOpen] = useState(!isConfigured)
@@ -31,9 +45,9 @@ export default function App() {
 
   // Toast on game detection
   useEffect(() => {
-    if (status === 'queue')   showToast(`⏳ ${settings.player} est en sélection !`, 'info')
-    if (status === 'ingame')  showToast(`🎮 ${settings.player} a lancé une game !`, 'info')
-  }, [status])
+    if (status === 'queue')   showToast(`⏳ ${settings.currentPlayer} est en sélection !`, 'info')
+    if (status === 'ingame')  showToast(`🎮 ${settings.currentPlayer} a lancé une game !`, 'info')
+  }, [status, settings.currentPlayer])
 
   // Toast on error
   useEffect(() => {
@@ -42,7 +56,7 @@ export default function App() {
 
   function handleSaveSettings(next) {
     saveSettings(next)
-    showToast('✓ Paramètres sauvegardés', 'success')
+    showToast(' Paramètres sauvegardés', 'success')
   }
 
   return (
@@ -60,6 +74,15 @@ export default function App() {
         </button>
       </header>
 
+      {/* Player selector dropdown */}
+      <div className={styles.section}>
+        <PlayerSelector
+          players={settings.players}
+          current={settings.currentPlayer}
+          onChange={p => saveSettings({ currentPlayer: p })}
+        />
+      </div>
+
       {/* Status + progress */}
       <div className={styles.section}>
         <StatusBar
@@ -73,7 +96,7 @@ export default function App() {
       {/* Player card */}
       <div className={styles.section}>
         <PlayerCard
-          player={settings.player}
+          player={settings.currentPlayer}
           status={status}
           currentGame={currentGame}
         />

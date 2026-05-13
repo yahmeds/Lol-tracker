@@ -13,11 +13,11 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-export async function saveConfig({ player, apiKey }) {
+export async function saveConfig({ players }) {
   if (!supabase) return
   const { error } = await supabase
     .from('config')
-    .upsert({ id: 1, player, api_key: apiKey, updated_at: new Date().toISOString() })
+    .upsert({ id: 1, players, updated_at: new Date().toISOString() })
   if (error) console.error('Supabase saveConfig error:', error)
 }
 
