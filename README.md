@@ -11,6 +11,7 @@ Lol Tracker monitors a player's in-game activity around the clock, logs every ga
 - **Live game detection** — polls the Riot Games API every x minutes via an external cron service
 - **Push notifications** — browser notifications fire the moment a game is detected
 - **Telegram notifications** — optional bot pings the coach on Telegram when a new game starts (works even when the PWA is closed)
+- **Multi-player tracking** — monitor multiple players simultaneously with a dropdown selector to switch between them
 - **Queue phase tracking** — distinguishes between champion select, loading screen, and in-game states
 - **Daily board** — games played and estimated playtime for any selected day, with live indicators for ongoing sessions
 - **Interactive calendar** — monthly view with color-coded activity dots, click any day to inspect its sessions
@@ -128,7 +129,6 @@ Feature branches trigger preview deployments on Vercel automatically.
 
 **Planned features for future releases:**
 
-- **Multi-player tracking** — monitor multiple players simultaneously from a single app instance (e.g., track a full team's practice sessions). Switch between players via a dropdown selector.
 - **Match results** — fetch end-of-game stats (W/L, KDA, champion) via Riot's Match-V5 API for deeper coaching insights.
 - **Tilt detection** — alert the coach when a player loses N consecutive games or hits longer losing streaks.
 - **Export & sharing** — export daily/weekly stats as CSV or shareable reports for coaching reviews.
