@@ -88,19 +88,22 @@ Open the deployed URL in Chrome on Android → menu → *Add to Home Screen*. Th
 cron-job.org (every 5 min)
         │
         ▼
-GET /api/poll  ──► reads config table (player + API key)
+GET /api/poll  ──► reads config table (players array + API key)
         │
         ▼
-Riot Spectator API  ──► player in game?
+For each player:
         │
-   ┌────┴────┐
-  YES        NO
-   │          │
-   ▼          ▼
-insert     close any
-new game   open game
-in games   + calc duration
-table
+        ├─► Riot Spectator API  ──► player in game?
+        │       │
+        │   ┌───┴────┐
+        │  YES        NO
+        │   │          │
+        │   ▼          ▼
+        │ insert    close any
+        │ new game  open games
+        │ in games  + calc duration
+        │
+        └─► Send Telegram notification (if new game)
 ```
  
 ---
