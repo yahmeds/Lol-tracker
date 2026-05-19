@@ -190,7 +190,7 @@ function Calendar({ allGames, selectedKey, onSelect }) {
               <span className={styles.calDayNum}>{date.getDate()}</span>
               {count > 0 && (
                 <span className={styles.calDayDot} style={{
-                  background: count >= 5 ? 'var(--red)' : count >= 3 ? 'var(--gold)' : 'var(--green)'
+                  background: count >= 9 ? 'var(--red)' : count >= 5 ? 'var(--gold)' : 'var(--green)'
                 }} />
               )}
             </button>
@@ -199,9 +199,9 @@ function Calendar({ allGames, selectedKey, onSelect }) {
       </div>
 
       <div className={styles.calLegend}>
-        <span><span className={styles.legendDot} style={{background:'var(--green)'}}/>1-2 games</span>
-        <span><span className={styles.legendDot} style={{background:'var(--gold)'}}/>3-4 games</span>
-        <span><span className={styles.legendDot} style={{background:'var(--red)'}}/>5+ games</span>
+        <span><span className={styles.legendDot} style={{background:'var(--green)'}}/>1-4 games</span>
+        <span><span className={styles.legendDot} style={{background:'var(--gold)'}}/>5-8 games</span>
+        <span><span className={styles.legendDot} style={{background:'var(--red)'}}/>9+ games</span>
       </div>
     </div>
   )
