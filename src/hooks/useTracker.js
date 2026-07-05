@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchGamesLast30Days } from '../lib/supabase'
+import { fetchAllGames } from '../lib/supabase'
 import { parsePlayer, playerSlug } from '../lib/riot'
 
 const LOCAL_GAMES_KEY_PREFIX = 'coachscan_games_'
@@ -46,7 +46,7 @@ export function useTracker(settings, isConfigured) {
 
     async function refresh() {
       try {
-        const remote = await fetchGamesLast30Days(slug)
+        const remote = await fetchAllGames(slug)
         setAllGames(remote)
         saveLocalGames(slug, remote)
 

@@ -45,15 +45,12 @@ export async function saveGame(game) {
   return data
 }
 
-export async function fetchGamesLast30Days(playerSlug) {
+export async function fetchAllGames(playerSlug) {
   if (!supabase) return []
-  const from = new Date()
-  from.setDate(from.getDate() - 30)
   const { data, error } = await supabase
     .from('games')
     .select('*')
     .eq('player_slug', playerSlug)
-    .gte('started_at', from.toISOString())
     .order('started_at', { ascending: true })
   if (error) console.error('Supabase fetchGames error:', error)
   return data || []
